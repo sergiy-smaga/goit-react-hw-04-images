@@ -1,40 +1,89 @@
 import { Component } from 'react';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
+
 import { StyledList } from './StyledImageGallery';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
-
-const API_KEY = '28129129-feff09d42f949c4b372c861bc';
+import { Button } from 'components/Button/Button';
+import { getImages } from 'service/api';
+import { Loader } from 'components/Loader/Loader';
 
 export class ImageGallery extends Component {
   state = {
     images: [],
-    status: 'idle',
+    isLoading: false,
     page: 1,
+    // error: false,
+    // message: '',
   };
 
-  componentDidUpdate = (prevProps, prevState) => {
-    if (prevProps.queryName !== this.props.queryName) {
-      fetch(
-        `https://pixabay.com/api/?q=${this.props.queryName}&page=${this.state.page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-      )
-        .then(response => {
-          if (response.ok) {
-            return response.json();
-          } else throw Error('Bad response');
-        })
-        .then(response => {
-          this.setState({ images: response.hits });
-        })
-        .catch(err => console.log(err.message));
+  componentDidUpdate = async (prevProps, prevState) => {
+    const { queryName } = this.props;
+    const { page } = this.state;
+    const pageInFetch = prevProps.queryName !== queryName ? 1 : page;
+
+    if (prevProps.queryName !== queryName || prevState.page !== page) {
+      if (queryName === '') {
+        Notify.failure('Nothing to search');
+        // this.setState({ message: 'Nothing to search', error: true });
+        return;
+      }
+
+      try {
+        this.setState({ isLoading: true });
+        const response = await getImages(queryName, pageInFetch);
+
+        if (response.length === 0) {
+          Notify.failure('Nothing founded');
+
+          this.setState({
+            isLoading: false,
+            // message: 'Nothing founded',
+            // error: true,
+          });
+          return;
+        }
+
+        if (prevProps.queryName !== queryName) {
+          this.setState({ images: response, page: 1 });
+        }
+
+        if (prevState.page !== page && page !== 1) {
+          this.setState(state => ({
+            images: [...state.images, ...response],
+          }));
+        }
+
+        this.setState({ isLoading: false });
+      } catch (error) {
+        Notify.failure(error.message);
+        // this.setState({
+        //   error: true,
+        //   isLoading: false,
+        //   message: error.message,
+        // });
+      }
     }
   };
 
+  onLoadMore = () => {
+    this.setState(state => ({ page: state.page + 1 }));
+  };
+
   render() {
+    const { images, isLoading } = this.state;
     return (
-      <StyledList>
-        {this.state.images.map(image => (
-          <ImageGalleryItem key={image.id} image={image} />
-        ))}
-      </StyledList>
+      <>
+        {/* {error && Notify.failure(message)} */}
+        <StyledList>
+          {images.map(image => (
+            <ImageGalleryItem key={image.id} image={image} />
+          ))}
+        </StyledList>
+        {images.length !== 0 && !isLoading && (
+          <Button loadMore={this.onLoadMore}>Load more</Button>
+        )}
+        {isLoading && <Loader />}
+      </>
     );
   }
 }

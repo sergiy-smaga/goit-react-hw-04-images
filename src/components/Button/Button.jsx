@@ -1,8 +1,9 @@
-import { Component } from 'react';
 import { StyledButton } from './StyledButton';
 
-export class Button extends Component {
-  render() {
-    return <StyledButton type="button">Load more</StyledButton>;
-  }
-}
+export const Button = ({ loadMore, children }) => {
+  return (
+    <StyledButton onClick={loadMore} type="button">
+      {children}
+    </StyledButton>
+  );
+};

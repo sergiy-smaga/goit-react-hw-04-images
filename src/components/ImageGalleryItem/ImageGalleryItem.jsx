@@ -1,12 +1,26 @@
 import { Component } from 'react';
 import { StyledListItem, StyledImage } from './StyledImageGalleryItem';
+import { Modal } from 'components/Modal/Modal';
 
 export class ImageGalleryItem extends Component {
+  state = {
+    isModalOpened: false,
+  };
+
+  toggleModal = () => {
+    this.setState(({ isModalOpened }) => ({ isModalOpened: !isModalOpened }));
+  };
+
   render() {
-    const { tags, webformatURL } = this.props.image;
+    const { tags, webformatURL, largeImageURL } = this.props.image;
     return (
       <StyledListItem>
-        <StyledImage src={webformatURL} alt={tags} />
+        <StyledImage onClick={this.toggleModal} src={webformatURL} alt={tags} />
+        {this.state.isModalOpened && (
+          <Modal onClose={this.toggleModal}>
+            <img src={largeImageURL} alt={tags} />
+          </Modal>
+        )}
       </StyledListItem>
     );
   }
