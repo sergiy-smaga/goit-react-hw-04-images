@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import { StyledList } from './StyledImageGallery';
@@ -8,86 +8,79 @@ import { getImages } from 'service/api';
 import { Loader } from 'components/Loader/Loader';
 import PropTypes from 'prop-types';
 
-export class ImageGallery extends Component {
-  state = {
-    images: [],
-    isLoading: false,
-    page: 1,
-    // error: false,
-    // message: '',
-  };
+export const ImageGallery = ({ queryName }) => {
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  // const firstSearch = useRef(true);
 
-  componentDidUpdate = async (prevProps, prevState) => {
-    const { queryName } = this.props;
-    const { page } = this.state;
-    const pageInFetch = prevProps.queryName !== queryName ? 1 : page;
+  useEffect(() => {
+    // if (firstSearch.current) {
+    //   firstSearch.current = false;
+    //   return;
+    // }
+    if (queryName === '') {
+      Notify.failure('Nothing to search');
+      return;
+    }
+    setIsLoading(true);
+    setPage(1);
+    setImages([]);
 
-    if (prevProps.queryName !== queryName || prevState.page !== page) {
-      if (queryName === '') {
-        Notify.failure('Nothing to search');
-        // this.setState({ message: 'Nothing to search', error: true });
-        return;
-      }
-
+    async function foo() {
       try {
-        this.setState({ isLoading: true });
-        const response = await getImages(queryName, pageInFetch);
-
+        const response = await getImages(queryName);
         if (response.length === 0) {
           Notify.failure('Nothing founded');
-
-          this.setState({
-            isLoading: false,
-            // message: 'Nothing founded',
-            // error: true,
-          });
+          setIsLoading(false);
           return;
         }
-
-        if (prevProps.queryName !== queryName) {
-          this.setState({ images: response, page: 1 });
-        }
-
-        if (prevState.page !== page && page !== 1) {
-          this.setState(state => ({
-            images: [...state.images, ...response],
-          }));
-        }
-
-        this.setState({ isLoading: false });
+        setImages(response);
+        setIsLoading(false);
       } catch (error) {
         Notify.failure(error.message);
-        // this.setState({
-        //   error: true,
-        //   isLoading: false,
-        //   message: error.message,
-        // });
       }
     }
-  };
+    foo();
+  }, [queryName]);
 
-  onLoadMore = () => {
-    this.setState(state => ({ page: state.page + 1 }));
-  };
+  useEffect(() => {
+    if (page === 1) {
+      return;
+    }
+    setIsLoading(true);
 
-  render() {
-    const { images, isLoading } = this.state;
-    return (
-      <>
-        {/* {error && Notify.failure(message)} */}
-        <StyledList>
-          {images.map(image => (
-            <ImageGalleryItem key={image.id} image={image} />
-          ))}
-        </StyledList>
-        {images.length !== 0 && !isLoading && (
-          <Button loadMore={this.onLoadMore}>Load more</Button>
-        )}
-        {isLoading && <Loader />}
-      </>
-    );
-  }
-}
+    async function foo() {
+      try {
+        const response = await getImages(queryName, page);
+        if (response.length === 0) {
+          Notify.failure('Images have finished');
+          setIsLoading(false);
+          return;
+        }
+        setImages(prevImages => [...prevImages, ...response]);
+        setIsLoading(false);
+      } catch (error) {
+        Notify.failure(error.message);
+      }
+    }
+    foo();
+  }, [page]);
+
+  return (
+    <>
+      <StyledList>
+        {images.map(image => (
+          <ImageGalleryItem key={image.id} image={image} />
+        ))}
+      </StyledList>
+      {images.length !== 0 && !isLoading && (
+        <Button loadMore={() => setPage(prev => prev + 1)}>Load more</Button>
+      )}
+      {isLoading && <Loader />}
+    </>
+  );
+};
 
 ImageGallery.propTypes = {
   queryName: PropTypes.string.isRequired,
