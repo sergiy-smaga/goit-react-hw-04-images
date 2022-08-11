@@ -11,11 +11,11 @@ export const Modal = ({ onClose, children }) => {
     return window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleKeyDown = e => {
+  function handleKeyDown(e) {
     if (e.code === 'Escape') {
       onClose();
     }
-  };
+  }
 
   const handleOverlayClick = e => {
     if (e.currentTarget === e.target) {
