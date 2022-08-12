@@ -8,12 +8,12 @@ import {
 } from './StyledSearchbar';
 import PropTypes from 'prop-types';
 
-export const Searchbar = ({ setQueryProp }) => {
+export const Searchbar = ({ handleSubmit }) => {
   const [query, setQuery] = useState('');
 
   const formSubmit = e => {
     e.preventDefault();
-    setQueryProp(query);
+    handleSubmit(query);
     setQuery('');
   };
 
@@ -38,5 +38,5 @@ export const Searchbar = ({ setQueryProp }) => {
 };
 
 Searchbar.propTypes = {
-  setQueryProp: PropTypes.func,
+  handleSubmit: PropTypes.func,
 };
