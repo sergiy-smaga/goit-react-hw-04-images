@@ -8,7 +8,7 @@ export const App = () => {
 
   return (
     <AppStyled>
-      <Searchbar onSubmit={setQuery} />
+      <Searchbar setQueryProp={setQuery} />
       <ImageGallery queryName={query} />
     </AppStyled>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import { StyledList } from './StyledImageGallery';
@@ -10,51 +10,31 @@ import PropTypes from 'prop-types';
 
 export const ImageGallery = ({ queryName }) => {
   const [images, setImages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
-  // const firstSearch = useRef(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const firstSearch = useRef(true);
 
   useEffect(() => {
-    // if (firstSearch.current) {
-    //   firstSearch.current = false;
-    //   return;
-    // }
-    if (queryName === '') {
-      Notify.failure('Nothing to search');
-      return;
-    }
-    setIsLoading(true);
     setPage(1);
     setImages([]);
-
-    async function foo() {
-      try {
-        const response = await getImages(queryName);
-        if (response.length === 0) {
-          Notify.failure('Nothing founded');
-          setIsLoading(false);
-          return;
-        }
-        setImages(response);
-        setIsLoading(false);
-      } catch (error) {
-        Notify.failure(error.message);
-      }
-    }
-    foo();
   }, [queryName]);
 
   useEffect(() => {
-    if (page === 1) {
+    if (firstSearch.current) {
+      firstSearch.current = false;
       return;
     }
-    setIsLoading(true);
+    if (queryName === '') {
+      return;
+    }
 
     async function foo() {
       try {
+        setIsLoading(true);
         const response = await getImages(queryName, page);
         if (response.length === 0) {
-          Notify.failure('Images have finished');
+          Notify.failure('Nothing founded');
           setIsLoading(false);
           return;
         }
@@ -65,7 +45,7 @@ export const ImageGallery = ({ queryName }) => {
       }
     }
     foo();
-  }, [page]);
+  }, [page, queryName]);
 
   return (
     <>
